@@ -28,7 +28,14 @@ if archivo_pdf is not None:
         with st.spinner("Subiendo y procesando el archivo PDF con Google AI Studio..."):
             try:
                 # Subimos el archivo directamente a la API de Gemini para que lo lea como documento adjunto
-                archivo_subido = client.files.upload(file=archivo_pdf)
+                bytes_pdf = archivo_pdf.getvalue()
+                
+                archivo_subido = client.files.upload(file=bytes_pdf,
+                    config=types.UploadFileConfig(
+                        mime_type="application/pdf",
+                        display_name=archivo_pdf.name
+                    )
+                )
             except Exception as e:
                 st.error(f"Error al subir el archivo a Google AI Studio: {e}")
                 st.stop()
