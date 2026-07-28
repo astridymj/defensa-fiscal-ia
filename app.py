@@ -25,12 +25,13 @@ if archivo_pdf is not None:
     st.success(f"Archivo cargado exitosamente: {archivo_pdf.name}")
     
     if st.button("Procesar PDF, Consultar Precedentes y Generar Defensa"):
-        with st.spinner("Subiendo y procesando el archivo PDF con Google AI Studio..."):
+       with st.spinner("Subiendo y procesando el archivo PDF con Google AI Studio..."):
             try:
-                # Subimos el archivo directamente a la API de Gemini para que lo lea como documento adjunto
+                # Leemos los bytes del archivo y especificamos el mime_type explícitamente
                 bytes_pdf = archivo_pdf.getvalue()
                 
-                archivo_subido = client.files.upload(file=bytes_pdf,
+                archivo_subido = client.files.upload(
+                    file=bytes_pdf,
                     config=types.UploadFileConfig(
                         mime_type="application/pdf",
                         display_name=archivo_pdf.name
