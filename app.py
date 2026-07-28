@@ -1,5 +1,6 @@
 import os
 import json
+import io
 import streamlit as st
 from google import genai
 from google.genai import types
@@ -26,12 +27,13 @@ if archivo_pdf is not None:
     if st.button("Procesar PDF, Consultar Precedentes y Generar Defensa"):
         with st.spinner("Subiendo y procesando el archivo PDF con Google AI Studio..."):
             try:
-                # Nos aseguramos de reiniciar el puntero del archivo y leer sus bytes limpios
-                archivo_pdf.seek(0)
-                bytes_pdf = archivo_pdf.read()
+                # Convertimos los bytes en un objeto tipo archivo compatible con google-genai
+                bytes_pdf = archivo_pdf.getvalue()
+                pdf_file_like = io.BytesIO(bytes_pdf)
+                pdf_file_like.name = archivo_pdf.name
                 
                 archivo_subido = client.files.upload(
-                    file=bytes_pdf,
+                    file=pdf_file_like,
                     config=types.UploadFileConfig(
                         mime_type="application/pdf",
                         display_name=archivo_pdf.name
@@ -65,7 +67,7 @@ if archivo_pdf is not None:
             """
 
             config = types.GenerateContentConfig(
-                temperature=0.3,  # Rigor técnico y jurídico
+                temperature=0.3,
                 system_instruction=prompt_sistema
             )
 
@@ -89,7 +91,6 @@ if archivo_pdf is not None:
             except Exception as e:
                 st.error(f"Error al actualizar Supabase: {e}")
 
-        # 3. Visualización de Resultados
         st.markdown("---")
         st.subheader("📋 Resultados del Análisis y Borrador de Defensa")
         st.markdown(defensa_generada)
