@@ -82,22 +82,25 @@ if archivo_pdf is not None:
             )
 
             try:
-                # Buscamos de forma dinámica un modelo compatible disponible en la cuenta
-                modelo_seleccionado = 'gemini-1.5-flash'
-                for m in client.models.list():
-                    if 'flash' in m.name and 'generateContent' in m.supported_generation_methods:
-                        modelo_seleccionado = m.name
-                        break
-
+                # Invocación directa y segura con el modelo estándar optimizado para la API
                 response = client.models.generate_content(
-                    model=modelo_seleccionado,
+                    model='gemini-2.5-flash',
                     contents=[archivo_subido, prompt_usuario],
                     config=config
                 )
                 defensa_generada = response.text
             except Exception as e:
-                st.error(f"Error en la generación con Gemini: {e}")
-                st.stop()
+                # Plan de respaldo automático utilizando gemini-2.0-flash si el anterior presenta restricciones
+                try:
+                    response = client.models.generate_content(
+                        model='gemini-2.0-flash',
+                        contents=[archivo_subido, prompt_usuario],
+                        config=config
+                    )
+                    defensa_generada = response.text
+                except Exception as e2:
+                    st.error(f"Error en la generación con Gemini: {e2}")
+                    st.stop()
 
         with st.spinner("Paso 3: Actualizando la base de datos en Supabase con el nuevo caso..."):
             try:
