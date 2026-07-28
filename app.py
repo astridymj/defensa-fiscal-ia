@@ -1,6 +1,7 @@
 import os
 import json
 import io
+import time
 import streamlit as st
 from google import genai
 from google.genai import types
@@ -25,9 +26,8 @@ if archivo_pdf is not None:
     st.success(f"Archivo cargado exitosamente: {archivo_pdf.name}")
     
     if st.button("Procesar PDF, Consultar Precedentes y Generar Defensa"):
-        with st.spinner("Subiendo y procesando el archivo PDF con Google AI Studio..."):
+        with st.spinner("Subiendo archivo a Google AI Studio..."):
             try:
-                # Convertimos los bytes en un objeto tipo archivo compatible con google-genai
                 bytes_pdf = archivo_pdf.getvalue()
                 pdf_file_like = io.BytesIO(bytes_pdf)
                 pdf_file_like.name = archivo_pdf.name
@@ -41,6 +41,16 @@ if archivo_pdf is not None:
                 )
             except Exception as e:
                 st.error(f"Error al subir el archivo a Google AI Studio: {e}")
+                st.stop()
+
+        # Esperar a que el archivo esté listo en los servidores de Google
+        with st.spinner("Esperando a que Google AI Studio procese el documento PDF..."):
+            while archivo_subido.state.name == "PROCESSING":
+                time.sleep(2)
+                archivo_subido = client.files.get(name=archivo_subido.name)
+            
+            if archivo_subido.state.name != "ACTIVE":
+                st.error(f"El archivo falló en el procesamiento de Google. Estado: {archivo_subido.state.name}")
                 st.stop()
 
         with st.spinner("Paso 1: Consultando precedentes jurídicos en Supabase..."):
@@ -67,17 +77,20 @@ if archivo_pdf is not None:
             """
 
             config = types.GenerateContentConfig(
-                temperature=0.3,
+                temperature=0.3,  # Rigor técnico y jurídico
                 system_instruction=prompt_sistema
             )
 
-            response = client.models.generate_content(
-                model='gemini-2.0-flash',
-                contents=[archivo_subido, prompt_usuario],
-                config=config
-            )
-            
-            defensa_generada = response.text
+            try:
+                response = client.models.generate_content(
+                    model='gemini-2.0-flash',
+                    contents=[archivo_subido, prompt_usuario],
+                    config=config
+                )
+                defensa_generada = response.text
+            except Exception as e:
+                st.error(f"Error en la generación con Gemini: {e}")
+                st.stop()
 
         with st.spinner("Paso 3: Actualizando la base de datos en Supabase con el nuevo caso..."):
             try:
@@ -91,6 +104,7 @@ if archivo_pdf is not None:
             except Exception as e:
                 st.error(f"Error al actualizar Supabase: {e}")
 
+        # 3. Visualización de Resultados
         st.markdown("---")
         st.subheader("📋 Resultados del Análisis y Borrador de Defensa")
         st.markdown(defensa_generada)
