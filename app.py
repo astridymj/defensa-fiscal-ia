@@ -26,7 +26,9 @@ if archivo_pdf is not None:
     if st.button("Procesar PDF, Consultar Precedentes y Generar Defensa"):
         with st.spinner("Subiendo y procesando el archivo PDF con Google AI Studio..."):
             try:
-                bytes_pdf = archivo_pdf.getvalue()
+                # Nos aseguramos de reiniciar el puntero del archivo y leer sus bytes limpios
+                archivo_pdf.seek(0)
+                bytes_pdf = archivo_pdf.read()
                 
                 archivo_subido = client.files.upload(
                     file=bytes_pdf,
