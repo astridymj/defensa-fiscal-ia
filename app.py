@@ -21,13 +21,11 @@ st.markdown("### Sube el archivo PDF del Requerimiento u Oficio de la DIAN")
 archivo_pdf = st.file_uploader("Selecciona el archivo PDF", type=["pdf"])
 
 if archivo_pdf is not None:
-    # Mostramos un mensaje de éxito indicando que el archivo se cargó
     st.success(f"Archivo cargado exitosamente: {archivo_pdf.name}")
     
     if st.button("Procesar PDF, Consultar Precedentes y Generar Defensa"):
-       with st.spinner("Subiendo y procesando el archivo PDF con Google AI Studio..."):
+        with st.spinner("Subiendo y procesando el archivo PDF con Google AI Studio..."):
             try:
-                # Leemos los bytes del archivo y especificamos el mime_type explícitamente
                 bytes_pdf = archivo_pdf.getvalue()
                 
                 archivo_subido = client.files.upload(
@@ -69,7 +67,6 @@ if archivo_pdf is not None:
                 system_instruction=prompt_sistema
             )
 
-            # Enviamos tanto el archivo subido como el texto del prompt a gemini-2.0-flash
             response = client.models.generate_content(
                 model='gemini-2.0-flash',
                 contents=[archivo_subido, prompt_usuario],
@@ -94,3 +91,5 @@ if archivo_pdf is not None:
         st.markdown("---")
         st.subheader("📋 Resultados del Análisis y Borrador de Defensa")
         st.markdown(defensa_generada)
+else:
+    st.info("Por favor, carga un archivo PDF para habilitar el procesamiento del requerimiento de la DIAN.")
